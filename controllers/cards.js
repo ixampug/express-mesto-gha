@@ -1,13 +1,19 @@
 /* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
 
+const {
+  ERR_BAD_REQUEST,
+  ERR_NOT_FOUND,
+  ERR_DEFAULT,
+} = require('../utils/constants');
+
 const handleErrors = (res, err) => {
   if (err.name === 'ValidationError') {
-    res.status(400).send({ message: 'Validation Error' });
+    res.status(ERR_BAD_REQUEST).send({ message: 'Validation Error' });
   } else if (err.name === 'CastError') {
-    res.status(400).send({ message: 'Request Error' });
+    res.status(ERR_BAD_REQUEST).send({ message: 'Request Error' });
   } else {
-    res.status(500).send({ message: 'Internal Server Error' });
+    res.status(ERR_DEFAULT).send({ message: 'Internal Server Error' });
   }
 };
 
@@ -44,7 +50,7 @@ const likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(404).send({ message: 'Card not found' });
+        res.status(ERR_NOT_FOUND).send({ message: 'Card not found' });
       } else {
         res.status(200).send(card);
       }
@@ -62,7 +68,7 @@ const dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(404).send({ message: 'Card not found' });
+        res.status(ERR_NOT_FOUND).send({ message: 'Card not found' });
       } else {
         res.status(200).send(card);
       }
@@ -76,7 +82,7 @@ const deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
-        res.status(404).send({ message: 'Card not found' });
+        res.status(ERR_NOT_FOUND).send({ message: 'Card not found' });
       } else {
         res.status(200).send(card);
       }
