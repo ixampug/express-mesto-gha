@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const userController = require('../controllers/users');
+const authMiddleware = require('../middlewares/auth');
 
-router.post('/', userController.createUser);
-router.get('/:userID', userController.getUserById);
-router.get('/', userController.getUsers);
-router.patch('/me', userController.updateProfile);
-router.patch('/me/avatar', userController.updateAvatar);
+router.get('/:userID', authMiddleware, userController.getUserById);
+router.get('/', authMiddleware, userController.getUsers);
+router.patch('/me', authMiddleware, userController.updateProfile);
+router.patch('/me/avatar', authMiddleware, userController.updateAvatar);
 
+// GET /users/me - возвращает информацию о текущем пользователе
 module.exports = router;

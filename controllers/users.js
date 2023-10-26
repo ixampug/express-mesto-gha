@@ -1,6 +1,8 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable eol-last */
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const {
   ERR_BAD_REQUEST,
@@ -43,17 +45,26 @@ const getUserById = (req, res) => {
 };
 
 const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  return User
-    .create({ name, about, avatar })
-    .then((r) => res.status(201).send(r))
-    .catch((e) => {
-      // console.log(e);
-      if (e instanceof mongoose.Error.ValidationError) {
-        return res.status(ERR_BAD_REQUEST).send({ message: 'invalid data' });
-      }
-      return res.status(ERR_DEFAULT).send({ message: 'serverv error' });
-    });
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10, (err, hashedPassword) => {
+    if (err) {
+      return res.status(500).send({ message: 'Ошибка хеширования пароля' });
+    }
+    return User
+      .create({
+        name, about, avatar, email, password: hashedPassword,
+      })
+      .then((r) => res.status(201).send(r))
+      .catch((e) => {
+        // console.log(e);
+        if (e instanceof mongoose.Error.ValidationError) {
+          return res.status(ERR_BAD_REQUEST).send({ message: 'invalid data' });
+        }
+        return res.status(ERR_DEFAULT).send({ message: 'server error' });
+      });
+  });
 };
 
 const updateAvatar = (req, res) => {
@@ -102,10 +113,31 @@ const updateProfile = (req, res) => {
     });
 };
 
+const login = (req, res) => {
+  const { email, password } = req.body;
+
+  User.findOne({ email }, (err, user) => {
+    if (err) {
+      return res.status(500).send({ message: 'Произошла ошибка при поиске пользователя' });
+    }
+
+    if (!user || !user.comparePassword(password)) {
+      return res.status(401).send({ message: 'Неверная почта или пароль' });
+    }
+
+    const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+
+    res.cookie('token', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+    return res.status(200).send({ token });
+  });
+};
+
 module.exports = {
   createUser,
   getUserById,
   getUsers,
   updateAvatar,
   updateProfile,
+  login,
 };
