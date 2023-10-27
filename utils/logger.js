@@ -1,21 +1,22 @@
 /* eslint-disable linebreak-style */
 const winston = require('winston');
+const expressWinston = require('express-winston');
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
+const loggerReq = expressWinston.logger({
   transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
+    new winston.transports.File({ filename: 'request.log' }),
   ],
+  format: winston.format.json(),
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.simple(),
-    }),
-  );
-}
+const loggerErr = expressWinston.errorLogger({
+  transports: [
+    new winston.transports.File({ filename: 'error.log' }),
+  ],
+  format: winston.format.json(),
+});
 
-module.exports = logger;
+module.exports = {
+  loggerReq,
+  loggerErr,
+};
