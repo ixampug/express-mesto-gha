@@ -1,4 +1,6 @@
-import { BAD_REQUEST, NOT_FOUND, DEFAULT, ALREADY_EXIST, FORBIDDEN, UNAUTHORIZED } from '../utils/constants';
+const {
+  BAD_REQUEST, NOT_FOUND, DEFAULT, ALREADY_EXIST, FORBIDDEN, UNAUTHORIZED,
+} = require('../utils/constants');
 
 class ErrorAPI extends Error {
   constructor(status, message) {

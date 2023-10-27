@@ -17,6 +17,7 @@ const ErrorAPI = require('./errors/errors').default;
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useNewUrlParser: true,
 }).then(() => {
+  // eslint-disable-next-line no-console
   console.log('Connected to DB');
 });
 
@@ -59,5 +60,6 @@ app.use(errors());
 app.use(handleErrors);
 
 app.listen(port, () => {
+  // eslint-disable-next-line no-console
   console.log(`Server is running on port ${port}`);
 });
