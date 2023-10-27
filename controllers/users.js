@@ -133,6 +133,14 @@ const login = (req, res) => {
   });
 };
 
+const getCurrentUser = (req, res) => {
+  const { user } = req;
+  if (!user) {
+    return res.status(404).send({ message: 'Пользователь не найден' });
+  }
+  return res.status(200).send(user);
+};
+
 module.exports = {
   createUser,
   getUserById,
@@ -140,4 +148,5 @@ module.exports = {
   updateAvatar,
   updateProfile,
   login,
+  getCurrentUser,
 };

@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 
 const helmet = require('helmet');
 const { celebrate, Joi, errors } = require('celebrate');
-
+const auth = require('./middlewares/auth');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 const { login, createUser } = require('./controllers/users');
@@ -43,6 +43,7 @@ app.post('/signup', celebrate({
   }),
 }), createUser);
 
+app.use(auth);
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
