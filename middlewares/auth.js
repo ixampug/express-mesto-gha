@@ -1,19 +1,25 @@
 const jwt = require('jsonwebtoken');
+const Errors = require('../errors/errors');
 
 const auth = (req, res, next) => {
-  const token = req.headers.authorization;
+  const { authorization } = req.headers;
 
-  if (!token) {
-    return res.status(401).json({ message: 'Токен не предоставлен' });
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return next(Errors.unauthorized('нужно авторизировться'));
   }
+
+  const token = authorization.replace('Bearer ', '');
+  let payload;
 
   try {
-    const decoded = jwt.verify(token, 'some-secret-key');
-    req.user = decoded;
-    return next();
+    payload = jwt.verify(token, 'some-secret-key');
   } catch (err) {
-    return res.status(401).json({ message: 'Неверный токен' });
+    return next(Errors.unauthorized('неправильный токен'));
   }
+
+  req.user = payload;
+
+  return next();
 };
 
 module.exports = auth;

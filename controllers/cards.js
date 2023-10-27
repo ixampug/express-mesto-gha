@@ -1,96 +1,98 @@
 /* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
+const Errors = require('../errors/errors');
 
-const {
-  ERR_BAD_REQUEST,
-  ERR_NOT_FOUND,
-  ERR_DEFAULT,
-} = require('../utils/constants');
-
-const handleErrors = (res, err) => {
-  if (err.name === 'ValidationError') {
-    res.status(ERR_BAD_REQUEST).send({ message: 'Validation Error' });
-  } else if (err.name === 'CastError') {
-    res.status(ERR_BAD_REQUEST).send({ message: 'Request Error' });
-  } else {
-    res.status(ERR_DEFAULT).send({ message: 'Internal Server Error' });
-  }
-};
-
-const createCard = (req, res) => {
+function createCard(req, res, next) {
   const { name, link } = req.body;
   Card.create({
     name,
     link,
     owner: req.user._id,
-  })
-    .then((card) => {
-      res.status(201).send(card);
-    })
-    .catch((err) => {
-      handleErrors(res, err);
-    });
-};
+  }, (err, card) => {
+    if (err) {
+      if (err.name === 'ValidationError') {
+        return next(Errors.badRequest('Ошибка валидации'));
+      }
+      return next(Errors.default('Ошибка сервера'));
+    }
+    return res.status(201).send(card);
+  });
+}
 
-const getCards = (req, res) => {
-  Card.find()
-    .then((cards) => {
-      res.status(200).send(cards);
-    })
-    .catch((err) => {
-      handleErrors(res, err);
-    });
-};
+function getCards(req, res, next) {
+  Card.find({}, (err, cards) => {
+    if (err) {
+      return next(Errors.default('Ошибка сервера'));
+    }
+    return res.status(200).send(cards);
+  });
+}
 
-const likeCard = (req, res) => {
+function likeCard(req, res, next) {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
-  )
-    .then((card) => {
-      if (!card) {
-        res.status(ERR_NOT_FOUND).send({ message: 'Card not found' });
-      } else {
-        res.status(200).send(card);
+    (err, card) => {
+      if (err) {
+        if (err.name === 'CastError') {
+          return next(Errors.badRequest('Неверный запрос'));
+        }
+        return next(Errors.default('Ошибка сервера'));
       }
-    })
-    .catch((err) => {
-      handleErrors(res, err);
-    });
-};
+      if (!card) {
+        return next(Errors.notFound('Карточки не сущестсует'));
+      }
+      return res.status(200).send(card);
+    },
+  );
+}
 
-const dislikeCard = (req, res) => {
+function dislikeCard(req, res, next) {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
-  )
-    .then((card) => {
-      if (!card) {
-        res.status(ERR_NOT_FOUND).send({ message: 'Card not found' });
-      } else {
-        res.status(200).send(card);
+    (err, card) => {
+      if (err) {
+        if (err.name === 'CastError') {
+          return next(Errors.badRequest('Неверный запрос'));
+        }
+        return next(Errors.default('Ошибка сервера'));
       }
-    })
-    .catch((err) => {
-      handleErrors(res, err);
-    });
-};
+      if (!card) {
+        return next(Errors.notFound('Карточки не сущестсует'));
+      }
+      return res.status(200).send(card);
+    },
+  );
+}
 
-const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .then((card) => {
-      if (!card) {
-        res.status(ERR_NOT_FOUND).send({ message: 'Card not found' });
-      } else {
-        res.status(200).send(card);
+function deleteCard(req, res, next) {
+  const { cardId } = req.params;
+  const userId = req.user._id;
+  Card.findById(cardId, (err, card) => {
+    if (err) {
+      return next(Errors.default('Ошибка сервера'));
+    }
+    if (!card) {
+      return next(Errors.notFound('Карточки не сущестсует'));
+    }
+    if (card.owner.toString() !== userId) {
+      return next(Errors.forbidden('Вам нельзя удалить эту карточку'));
+    }
+    // eslint-disable-next-line no-shadow
+    return Card.deleteOne(card, (err, deletedCard) => {
+      if (err) {
+        return next(Errors.default('Ошибка сервера'));
       }
-    })
-    .catch((err) => {
-      handleErrors(res, err);
+      if (!deletedCard) {
+        return next(Errors.notFound('Карточки не сущестсует'));
+      }
+      return res.status(200).send({ data: deletedCard });
     });
-};
+  });
+}
 
 module.exports = {
   createCard,

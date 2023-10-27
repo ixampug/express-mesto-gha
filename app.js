@@ -10,6 +10,9 @@ const auth = require('./middlewares/auth');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 const { login, createUser } = require('./controllers/users');
+const handleErrors = require('./middlewares/handleErrors');
+const { REGEX } = require('./utils/constants');
+const Errors = require('./errors/errors');
 
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useNewUrlParser: true,
@@ -39,7 +42,7 @@ app.post('/signup', celebrate({
     password: Joi.string().required().min(8),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(/^(http|https):\/\/(www\.)?[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]+$/),
+    avatar: Joi.string().pattern(REGEX),
   }),
 }), createUser);
 
@@ -47,11 +50,13 @@ app.use(auth);
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
-app.use('*', (req, res) => {
-  res.status(404).send({ message: 'Страница не существует.' });
+app.use('*', (req, res, next) => {
+  next(Errors.notFound('Страница не существует'));
 });
 
 app.use(errors());
+
+app.use(handleErrors);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
