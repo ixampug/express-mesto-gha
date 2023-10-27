@@ -1,11 +1,4 @@
-const {
-  BAD_REQUEST,
-  NOT_FOUND,
-  DEFAULT,
-  ALREADY_EXIST,
-  FORBIDDEN,
-  UNAUTHORIZED,
-} = require('../utils/constants');
+import { BAD_REQUEST, NOT_FOUND, DEFAULT, ALREADY_EXIST, FORBIDDEN, UNAUTHORIZED } from '../utils/constants';
 
 class ErrorAPI extends Error {
   constructor(status, message) {
@@ -39,4 +32,4 @@ class ErrorAPI extends Error {
   }
 }
 
-module.exports = ErrorAPI;
+export default ErrorAPI;

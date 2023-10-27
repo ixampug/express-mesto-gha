@@ -2,7 +2,7 @@
 /* eslint-disable eol-last */
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const ErrorAPI = require('../errors/errors');
+const ErrorAPI = require('../errors/errors').default;
 
 const User = require('../models/user');
 
