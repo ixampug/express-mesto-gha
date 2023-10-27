@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
-const Errors = require('../errors/errors');
+const ErrorAPI = require('../errors/errors');
 
 function createCard(req, res, next) {
   const { name, link } = req.body;
@@ -11,9 +11,9 @@ function createCard(req, res, next) {
   }, (err, card) => {
     if (err) {
       if (err.name === 'ValidationError') {
-        return next(Errors.badRequest('Ошибка валидации'));
+        return next(ErrorAPI.badRequest('Ошибка валидации'));
       }
-      return next(Errors.default('Ошибка сервера'));
+      return next(ErrorAPI.default('Ошибка сервера'));
     }
     return res.status(201).send(card);
   });
@@ -22,7 +22,7 @@ function createCard(req, res, next) {
 function getCards(req, res, next) {
   Card.find({}, (err, cards) => {
     if (err) {
-      return next(Errors.default('Ошибка сервера'));
+      return next(ErrorAPI.default('Ошибка сервера'));
     }
     return res.status(200).send(cards);
   });
@@ -36,12 +36,12 @@ function likeCard(req, res, next) {
     (err, card) => {
       if (err) {
         if (err.name === 'CastError') {
-          return next(Errors.badRequest('Неверный запрос'));
+          return next(ErrorAPI.badRequest('Неверный запрос'));
         }
-        return next(Errors.default('Ошибка сервера'));
+        return next(ErrorAPI.default('Ошибка сервера'));
       }
       if (!card) {
-        return next(Errors.notFound('Карточки не сущестсует'));
+        return next(ErrorAPI.notFound('Карточки не сущестсует'));
       }
       return res.status(200).send(card);
     },
@@ -56,12 +56,12 @@ function dislikeCard(req, res, next) {
     (err, card) => {
       if (err) {
         if (err.name === 'CastError') {
-          return next(Errors.badRequest('Неверный запрос'));
+          return next(ErrorAPI.badRequest('Неверный запрос'));
         }
-        return next(Errors.default('Ошибка сервера'));
+        return next(ErrorAPI.default('Ошибка сервера'));
       }
       if (!card) {
-        return next(Errors.notFound('Карточки не сущестсует'));
+        return next(ErrorAPI.notFound('Карточки не сущестсует'));
       }
       return res.status(200).send(card);
     },
@@ -73,21 +73,21 @@ function deleteCard(req, res, next) {
   const userId = req.user._id;
   Card.findById(cardId, (err, card) => {
     if (err) {
-      return next(Errors.default('Ошибка сервера'));
+      return next(ErrorAPI.default('Ошибка сервера'));
     }
     if (!card) {
-      return next(Errors.notFound('Карточки не сущестсует'));
+      return next(ErrorAPI.notFound('Карточки не сущестсует'));
     }
     if (card.owner.toString() !== userId) {
-      return next(Errors.forbidden('Вам нельзя удалить эту карточку'));
+      return next(ErrorAPI.forbidden('Вам нельзя удалить эту карточку'));
     }
     // eslint-disable-next-line no-shadow
     return Card.deleteOne(card, (err, deletedCard) => {
       if (err) {
-        return next(Errors.default('Ошибка сервера'));
+        return next(ErrorAPI.default('Ошибка сервера'));
       }
       if (!deletedCard) {
-        return next(Errors.notFound('Карточки не сущестсует'));
+        return next(ErrorAPI.notFound('Карточки не сущестсует'));
       }
       return res.status(200).send({ data: deletedCard });
     });

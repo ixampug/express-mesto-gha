@@ -2,7 +2,7 @@
 /* eslint-disable eol-last */
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Errors = require('../errors/errors');
+const ErrorAPI = require('../errors/errors');
 
 const User = require('../models/user');
 
@@ -12,7 +12,7 @@ const getUsers = (req, res, next) => {
       res.status(200).send(users);
     })
     .catch(() => {
-      next(Errors.default('Ошибка сервера'));
+      next(ErrorAPI.default('Ошибка сервера'));
     });
 };
 
@@ -21,15 +21,15 @@ const getUserById = (req, res, next) => {
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        return next(Errors.notFound('пользователь не сущетсвует'));
+        return next(ErrorAPI.notFound('пользователь не сущетсвует'));
       }
       return res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return next(Errors.badRequest('Неверный запрос'));
+        return next(ErrorAPI.badRequest('Неверный запрос'));
       }
-      return next(Errors.default('Ошибка сервера'));
+      return next(ErrorAPI.default('Ошибка сервера'));
     });
 };
 
@@ -44,7 +44,7 @@ const createUser = (req, res, next) => {
 
   bcrypt.hash(password, 10, (err, hashedPassword) => {
     if (err) {
-      return next(Errors.default('Ошибка сервера'));
+      return next(ErrorAPI.default('Ошибка сервера'));
     }
 
     return User.create({
@@ -62,12 +62,12 @@ const createUser = (req, res, next) => {
       // eslint-disable-next-line no-shadow
       .catch((err) => {
         if (err.name === 'ValidationError') {
-          return next(Errors.badRequest('Ошибка валидации'));
+          return next(ErrorAPI.badRequest('Ошибка валидации'));
         }
         if (err.code === 11000) {
-          return next(Errors.alreadyExists('такой email уже используется'));
+          return next(ErrorAPI.alreadyExists('такой email уже используется'));
         }
-        return next(Errors.default('Ошибка сервера'));
+        return next(ErrorAPI.default('Ошибка сервера'));
       });
   });
 };
@@ -81,15 +81,15 @@ const updateAvatar = (req, res, next) => {
   )
     .then((updatedUser) => {
       if (!updatedUser) {
-        return next(Errors.notFound('пользователя не существует'));
+        return next(ErrorAPI.notFound('пользователя не существует'));
       }
       return res.status(200).send(updatedUser);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(Errors.badRequest('Ошибка валидации'));
+        return next(ErrorAPI.badRequest('Ошибка валидации'));
       }
-      return next(Errors.default('Ошибка сервера'));
+      return next(ErrorAPI.default('Ошибка сервера'));
     });
 };
 
@@ -102,15 +102,15 @@ const updateProfile = (req, res, next) => {
   )
     .then((updatedUser) => {
       if (!updatedUser) {
-        return next(Errors.notFound('пользователя не существует'));
+        return next(ErrorAPI.notFound('пользователя не существует'));
       }
       return res.status(200).send(updatedUser);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(Errors.badRequest('Ошибка валидации'));
+        return next(ErrorAPI.badRequest('Ошибка валидации'));
       }
-      return next(Errors.default('Ошибка сервера'));
+      return next(ErrorAPI.default('Ошибка сервера'));
     });
 };
 
@@ -120,7 +120,7 @@ const login = (req, res, next) => {
   User.findUserByCredentials(email, password)
     .then((user) => {
       if (!user) {
-        return next(Errors.notFound('пользователя не существует'));
+        return next(ErrorAPI.notFound('пользователя не существует'));
       }
       const token = jwt.sign(
         { _id: user._id },
@@ -129,18 +129,18 @@ const login = (req, res, next) => {
       );
       return res.status(200).send({ token });
     })
-    .catch(() => next(Errors.unauthorized('Ошибка авторизации')));
+    .catch(() => next(ErrorAPI.unauthorized('Ошибка авторизации')));
 };
 
 const getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        return next(Errors.notFound('пользователя не существует'));
+        return next(ErrorAPI.notFound('пользователя не существует'));
       }
       return res.status(200).send(user);
     })
-    .catch(() => next(Errors.default('Ошибка сервера')));
+    .catch(() => next(ErrorAPI.default('Ошибка сервера')));
 };
 
 module.exports = {

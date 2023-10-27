@@ -1,13 +1,10 @@
-const Errors = require('../errors/errors');
-const logger = require('../utils/logger');
+const ErrorAPI = require('../errors/errors');
 
 const handleErrors = (err, req, res) => {
-  if (err instanceof Errors) {
-    logger.error(`Error occurred: ${err.message}`);
+  if (err instanceof ErrorAPI) {
     return res.status(err.status).send({ message: err.message });
   }
-  logger.error(`Internal Server Error: ${err}`);
-  return res.status(Errors.default).send({ message: 'Ошибка сервера' });
+  return res.status(ErrorAPI.default).send({ message: 'Ошибка сервера' });
 };
 
 module.exports = handleErrors;

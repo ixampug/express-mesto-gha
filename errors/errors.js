@@ -7,7 +7,7 @@ const {
   UNAUTHORIZED,
 } = require('../utils/constants');
 
-class Errors extends Error {
+class ErrorAPI extends Error {
   constructor(status, message) {
     super();
     this.status = status;
@@ -15,28 +15,28 @@ class Errors extends Error {
   }
 
   static badRequest(msg) {
-    return new Errors(BAD_REQUEST, msg);
+    return new ErrorAPI(BAD_REQUEST, msg);
   }
 
   static notFound(msg) {
-    return new Errors(NOT_FOUND, msg);
+    return new ErrorAPI(NOT_FOUND, msg);
   }
 
   static default(msg) {
-    return new Errors(DEFAULT, msg);
+    return new ErrorAPI(DEFAULT, msg);
   }
 
   static alreadyExist(msg) {
-    return new Errors(ALREADY_EXIST, msg);
+    return new ErrorAPI(ALREADY_EXIST, msg);
   }
 
   static forbidden(msg) {
-    return new Errors(FORBIDDEN, msg);
+    return new ErrorAPI(FORBIDDEN, msg);
   }
 
   static unauthorized(msg) {
-    return new Errors(UNAUTHORIZED, msg);
+    return new ErrorAPI(UNAUTHORIZED, msg);
   }
 }
 
-module.exports = Errors;
+module.exports = ErrorAPI;
