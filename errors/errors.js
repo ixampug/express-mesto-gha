@@ -34,4 +34,4 @@ class ErrorAPI extends Error {
   }
 }
 
-export default ErrorAPI;
+module.exports = ErrorAPI;
