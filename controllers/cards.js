@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
-const ErrorAPI = require('../errors/errors').default;
+const ErrorAPI = require('../errors/errors');
 
 function createCard(req, res, next) {
   const { name, link } = req.body;

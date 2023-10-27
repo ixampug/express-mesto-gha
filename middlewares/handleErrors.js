@@ -1,4 +1,4 @@
-const ErrorAPI = require('../errors/errors').default;
+const ErrorAPI = require('../errors/errors');
 
 const handleErrors = (err, req, res) => {
   if (err instanceof ErrorAPI) {
