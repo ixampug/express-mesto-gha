@@ -1,8 +1,14 @@
 /* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
-const ErrorAPI = require('../errors/errors');
+// const ErrorAPI = require('../errors/errors');
+const handleErrors = require('../middlewares/handleErrors');
+const {
+  NOT_FOUND,
+  DEFAULT,
+  FORBIDDEN,
+} = require('../utils/constants');
 
-function createCard(req, res, next) {
+const createCard = (req, res) => {
   const { name, link } = req.body;
   Card.create({
     name,
@@ -13,25 +19,21 @@ function createCard(req, res, next) {
       res.status(201).send(card);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(ErrorAPI.badRequest('Ошибка валидации'));
-      } else {
-        next(ErrorAPI.default('Ошибка сервера'));
-      }
+      handleErrors(res, err);
     });
-}
+};
 
-function getCards(req, res, next) {
-  Card.find({})
+const getCards = (req, res) => {
+  Card.find()
     .then((cards) => {
       res.status(200).send(cards);
     })
-    .catch(() => {
-      next(ErrorAPI.default('Ошибка сервера'));
+    .catch((err) => {
+      handleErrors(res, err);
     });
-}
+};
 
-function likeCard(req, res, next) {
+function likeCard(req, res) {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -39,21 +41,17 @@ function likeCard(req, res, next) {
   )
     .then((card) => {
       if (!card) {
-        next(ErrorAPI.notFound('Карточки не существует'));
+        res.status(NOT_FOUND).send({ message: 'Card not found' });
       } else {
         res.status(200).send(card);
       }
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        next(ErrorAPI.badRequest('Неверный запрос'));
-      } else {
-        next(ErrorAPI.default('Ошибка сервера'));
-      }
+      handleErrors(res, err);
     });
 }
 
-function dislikeCard(req, res, next) {
+function dislikeCard(req, res) {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -61,43 +59,32 @@ function dislikeCard(req, res, next) {
   )
     .then((card) => {
       if (!card) {
-        next(ErrorAPI.notFound('Карточки не существует'));
+        res.status(NOT_FOUND).send({ message: 'Card not found' });
       } else {
         res.status(200).send(card);
       }
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        next(ErrorAPI.badRequest('Неверный запрос'));
-      } else {
-        next(ErrorAPI.default('Ошибка сервера'));
-      }
+      handleErrors(res, err);
     });
 }
 
-function deleteCard(req, res, next) {
-  const { cardId } = req.params;
-  const userId = req.user._id;
-  Card.findById(cardId)
-    .then((card) => {
-      if (!card) {
-        next(ErrorAPI.notFound('Карточки не существует'));
-      } else if (card.owner.toString() !== userId) {
-        next(ErrorAPI.forbidden('Вам нельзя удалить эту карточку'));
-      } else {
-        Card.deleteOne(card);
-      }
-    })
-    .then((deletedCard) => {
-      if (!deletedCard) {
-        next(ErrorAPI.notFound('Карточки не существует'));
-      } else {
-        res.status(200).send({ data: deletedCard });
-      }
-    })
-    .catch(() => {
-      next(ErrorAPI.default('Ошибка сервера'));
-    });
+async function deleteCard(req, res) {
+  try {
+    const { cardId } = req.params;
+    const userId = req.user._id;
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(NOT_FOUND).send({ message: 'Карточки не существует' });
+    }
+    if (card.owner.toString() !== userId) {
+      return res.status(FORBIDDEN).send({ message: 'Вам нельзя удалить эту карточку' });
+    }
+    await Card.deleteOne(card);
+    return res.status(200).send({ data: card });
+  } catch (error) {
+    return res.status(DEFAULT).send({ message: 'Ошибка сервера' });
+  }
 }
 
 module.exports = {

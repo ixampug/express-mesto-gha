@@ -1,11 +1,10 @@
 const jwt = require('jsonwebtoken');
-const ErrorAPI = require('../errors/errors');
 
 const auth = (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    return next(ErrorAPI.unauthorized('нужно авторизировться'));
+    return res.status(401).json({ message: 'нужно авторизировться' });
   }
 
   const token = authorization.replace('Bearer ', '');
@@ -14,7 +13,7 @@ const auth = (req, res, next) => {
   try {
     payload = jwt.verify(token, 'some-secret-key');
   } catch (err) {
-    return next(ErrorAPI.unauthorized('неправильный токен'));
+    return res.status(401).json({ message: 'неправильный токен' });
   }
 
   req.user = payload;
