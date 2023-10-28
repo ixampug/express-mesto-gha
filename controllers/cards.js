@@ -8,24 +8,27 @@ function createCard(req, res, next) {
     name,
     link,
     owner: req.user._id,
-  }, (err, card) => {
-    if (err) {
+  })
+    .then((card) => {
+      res.status(201).send(card);
+    })
+    .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(ErrorAPI.badRequest('Ошибка валидации'));
+        next(ErrorAPI.badRequest('Ошибка валидации'));
+      } else {
+        next(ErrorAPI.default('Ошибка сервера'));
       }
-      return next(ErrorAPI.default('Ошибка сервера'));
-    }
-    return res.status(201).send(card);
-  });
+    });
 }
 
 function getCards(req, res, next) {
-  Card.find({}, (err, cards) => {
-    if (err) {
-      return next(ErrorAPI.default('Ошибка сервера'));
-    }
-    return res.status(200).send(cards);
-  });
+  Card.find({})
+    .then((cards) => {
+      res.status(200).send(cards);
+    })
+    .catch(() => {
+      next(ErrorAPI.default('Ошибка сервера'));
+    });
 }
 
 function likeCard(req, res, next) {
@@ -33,19 +36,21 @@ function likeCard(req, res, next) {
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
-    (err, card) => {
-      if (err) {
-        if (err.name === 'CastError') {
-          return next(ErrorAPI.badRequest('Неверный запрос'));
-        }
-        return next(ErrorAPI.default('Ошибка сервера'));
-      }
+  )
+    .then((card) => {
       if (!card) {
-        return next(ErrorAPI.notFound('Карточки не сущестсует'));
+        next(ErrorAPI.notFound('Карточки не существует'));
+      } else {
+        res.status(200).send(card);
       }
-      return res.status(200).send(card);
-    },
-  );
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(ErrorAPI.badRequest('Неверный запрос'));
+      } else {
+        next(ErrorAPI.default('Ошибка сервера'));
+      }
+    });
 }
 
 function dislikeCard(req, res, next) {
@@ -53,45 +58,46 @@ function dislikeCard(req, res, next) {
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
-    (err, card) => {
-      if (err) {
-        if (err.name === 'CastError') {
-          return next(ErrorAPI.badRequest('Неверный запрос'));
-        }
-        return next(ErrorAPI.default('Ошибка сервера'));
-      }
+  )
+    .then((card) => {
       if (!card) {
-        return next(ErrorAPI.notFound('Карточки не сущестсует'));
+        next(ErrorAPI.notFound('Карточки не существует'));
+      } else {
+        res.status(200).send(card);
       }
-      return res.status(200).send(card);
-    },
-  );
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(ErrorAPI.badRequest('Неверный запрос'));
+      } else {
+        next(ErrorAPI.default('Ошибка сервера'));
+      }
+    });
 }
 
 function deleteCard(req, res, next) {
   const { cardId } = req.params;
   const userId = req.user._id;
-  Card.findById(cardId, (err, card) => {
-    if (err) {
-      return next(ErrorAPI.default('Ошибка сервера'));
-    }
-    if (!card) {
-      return next(ErrorAPI.notFound('Карточки не сущестсует'));
-    }
-    if (card.owner.toString() !== userId) {
-      return next(ErrorAPI.forbidden('Вам нельзя удалить эту карточку'));
-    }
-    // eslint-disable-next-line no-shadow
-    return Card.deleteOne(card, (err, deletedCard) => {
-      if (err) {
-        return next(ErrorAPI.default('Ошибка сервера'));
+  Card.findById(cardId)
+    .then((card) => {
+      if (!card) {
+        next(ErrorAPI.notFound('Карточки не существует'));
+      } else if (card.owner.toString() !== userId) {
+        next(ErrorAPI.forbidden('Вам нельзя удалить эту карточку'));
+      } else {
+        Card.deleteOne(card);
       }
+    })
+    .then((deletedCard) => {
       if (!deletedCard) {
-        return next(ErrorAPI.notFound('Карточки не сущестсует'));
+        next(ErrorAPI.notFound('Карточки не существует'));
+      } else {
+        res.status(200).send({ data: deletedCard });
       }
-      return res.status(200).send({ data: deletedCard });
+    })
+    .catch(() => {
+      next(ErrorAPI.default('Ошибка сервера'));
     });
-  });
 }
 
 module.exports = {

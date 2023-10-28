@@ -2,38 +2,49 @@
 /* eslint-disable eol-last */
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const ErrorAPI = require('../errors/errors');
+// const ErrorAPI = require('../errors/errors');
+const {
+  BAD_REQUEST,
+  NOT_FOUND,
+  DEFAULT,
+  ALREADY_EXIST,
+  UNAUTHORIZED,
+} = require('../utils/constants');
 
 const User = require('../models/user');
 
-const getUsers = (req, res, next) => {
+const getUsers = (req, res) => {
   User.find()
     .then((users) => {
       res.status(200).send(users);
     })
-    .catch(() => {
-      next(ErrorAPI.default('Ошибка сервера'));
+    .catch((e) => {
+      if (e) {
+        res.status(DEFAULT).send({ message: 'Internal Server Error' });
+      } else {
+        res.status(NOT_FOUND).send({ message: 'Users not found' });
+      }
     });
 };
 
-const getUserById = (req, res, next) => {
-  const { userId } = req.params;
-  User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        return next(ErrorAPI.notFound('пользователь не сущетсвует'));
+const getUserById = (req, res) => {
+  const { userID } = req.params;
+  return User
+    .findById(userID)
+    .then((r) => {
+      if (r === null) {
+        return res.status(NOT_FOUND).send({ message: 'user not found' });
       }
-      return res.status(200).send(user);
+      return res.status(200).send(r);
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(ErrorAPI.badRequest('Неверный запрос'));
+    .catch((e) => {
+      if (e.name === 'CastError') {
+        return res.status(BAD_REQUEST).send({ message: 'invalid ID' });
       }
-      return next(ErrorAPI.default('Ошибка сервера'));
+      return res.status(DEFAULT).send({ message: 'server error' });
     });
 };
-
-const createUser = (req, res, next) => {
+const createUser = (req, res) => {
   const {
     name,
     about,
@@ -42,12 +53,8 @@ const createUser = (req, res, next) => {
     password,
   } = req.body;
 
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) {
-      return next(ErrorAPI.default('Ошибка сервера'));
-    }
-
-    return User.create({
+  bcrypt.hash(password, 10)
+    .then((hashedPassword) => User.create({
       name,
       about,
       avatar,
@@ -59,20 +66,21 @@ const createUser = (req, res, next) => {
         delete userResponse.password;
         res.status(201).send(userResponse);
       })
-      // eslint-disable-next-line no-shadow
       .catch((err) => {
         if (err.name === 'ValidationError') {
-          return next(ErrorAPI.badRequest('Ошибка валидации'));
+          res.status(400).send({ message: 'Ошибка валидации' });
+        } else if (err.code === 11000) {
+          res.status(ALREADY_EXIST).send({ message: 'такой email уже используется' });
+        } else {
+          res.status(500).send({ message: 'Ошибка сервера' });
         }
-        if (err.code === 11000) {
-          return next(ErrorAPI.alreadyExists('такой email уже используется'));
-        }
-        return next(ErrorAPI.default('Ошибка сервера'));
-      });
-  });
+      }))
+    .catch(() => {
+      res.status(500).send({ message: 'Ошибка сервера' });
+    });
 };
 
-const updateAvatar = (req, res, next) => {
+const updateAvatar = (req, res) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -81,19 +89,21 @@ const updateAvatar = (req, res, next) => {
   )
     .then((updatedUser) => {
       if (!updatedUser) {
-        return next(ErrorAPI.notFound('пользователя не существует'));
+        res.status(NOT_FOUND).send({ message: 'User not found' });
+      } else {
+        res.status(200).send(updatedUser);
       }
-      return res.status(200).send(updatedUser);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(ErrorAPI.badRequest('Ошибка валидации'));
+        res.status(BAD_REQUEST).send({ message: 'Validation Error' });
+      } else {
+        res.status(DEFAULT).send({ message: 'Internal Server Error' });
       }
-      return next(ErrorAPI.default('Ошибка сервера'));
     });
 };
 
-const updateProfile = (req, res, next) => {
+const updateProfile = (req, res) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -102,45 +112,49 @@ const updateProfile = (req, res, next) => {
   )
     .then((updatedUser) => {
       if (!updatedUser) {
-        return next(ErrorAPI.notFound('пользователя не существует'));
+        res.status(NOT_FOUND).send({ message: 'User not found' });
+      } else {
+        res.status(200).send(updatedUser);
       }
-      return res.status(200).send(updatedUser);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(ErrorAPI.badRequest('Ошибка валидации'));
+        res.status(BAD_REQUEST).send({ message: 'Validation Error' });
+      } else {
+        res.status(DEFAULT).send({ message: 'Internal Server Error' });
       }
-      return next(ErrorAPI.default('Ошибка сервера'));
     });
 };
 
-const login = (req, res, next) => {
+const login = (req, res) => {
   const { email, password } = req.body;
 
   User.findUserByCredentials(email, password)
     .then((user) => {
       if (!user) {
-        return next(ErrorAPI.notFound('пользователя не существует'));
+        res.status(NOT_FOUND).send({ message: 'пользователя не существует' });
+      } else {
+        const token = jwt.sign(
+          { _id: user._id },
+          'some-secret-key',
+          { expiresIn: '7d' },
+        );
+        res.status(200).send({ token });
       }
-      const token = jwt.sign(
-        { _id: user._id },
-        'some-secret-key',
-        { expiresIn: '7d' },
-      );
-      return res.status(200).send({ token });
     })
-    .catch(() => next(ErrorAPI.unauthorized('Ошибка авторизации')));
+    .catch(() => res.status(UNAUTHORIZED).send({ message: 'Ошибка авторизации' }));
 };
 
-const getCurrentUser = (req, res, next) => {
+const getCurrentUser = (req, res) => {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        return next(ErrorAPI.notFound('пользователя не существует'));
+        res.status(NOT_FOUND).send({ message: 'пользователя не существует' });
+      } else {
+        res.status(200).send(user);
       }
-      return res.status(200).send(user);
     })
-    .catch(() => next(ErrorAPI.default('Ошибка сервера')));
+    .catch(() => res.status(500).send({ message: 'Ошибка сервера' }));
 };
 
 module.exports = {

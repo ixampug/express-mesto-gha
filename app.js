@@ -13,7 +13,6 @@ const { login, createUser } = require('./controllers/users');
 const handleErrors = require('./middlewares/handleErrors');
 const { REGEX } = require('./utils/constants');
 const ErrorAPI = require('./errors/errors');
-const { loggerErr, loggerReq } = require('./utils/logger');
 
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useNewUrlParser: true,
@@ -30,7 +29,6 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(loggerReq);
 
 app.post('/signin', celebrate({
   body: Joi.object().keys({
@@ -56,7 +54,7 @@ app.use('/cards', cardRouter);
 app.use('*', (req, res, next) => {
   next(ErrorAPI.notFound('Страница не существует'));
 });
-app.use(loggerErr);
+
 app.use(errors());
 
 app.use(handleErrors);
