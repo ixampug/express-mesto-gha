@@ -1,13 +1,12 @@
 /* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
 // const ErrorAPI = require('../errors/errors');
-const handleErrors = require('../middlewares/handleErrors');
-const {
-  NOT_FOUND,
-  DEFAULT,
-  FORBIDDEN,
-} = require('../utils/constants');
-
+// const handleErrors = require('../middlewares/handleErrors');
+// const {
+//   NOT_FOUND,
+//   DEFAULT,
+//   FORBIDDEN,
+// } = require('../utils/constants');
 const createCard = (req, res) => {
   const { name, link } = req.body;
   Card.create({
@@ -19,7 +18,11 @@ const createCard = (req, res) => {
       res.status(201).send(card);
     })
     .catch((err) => {
-      handleErrors(res, err);
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Ошибка валидации' });
+      } else {
+        res.status(500).send({ message: 'Ошибка сервера' });
+      }
     });
 };
 
@@ -28,8 +31,8 @@ const getCards = (req, res) => {
     .then((cards) => {
       res.status(200).send(cards);
     })
-    .catch((err) => {
-      handleErrors(res, err);
+    .catch(() => {
+      res.status(500).send({ message: 'Ошибка сервера' });
     });
 };
 
@@ -41,13 +44,17 @@ function likeCard(req, res) {
   )
     .then((card) => {
       if (!card) {
-        res.status(NOT_FOUND).send({ message: 'Card not found' });
+        res.status(404).send({ message: 'Card not found' });
       } else {
         res.status(200).send(card);
       }
     })
     .catch((err) => {
-      handleErrors(res, err);
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'неправильный запрос' });
+      } else {
+        res.status(500).send({ message: 'Ошибка сервера' });
+      }
     });
 }
 
@@ -59,13 +66,17 @@ function dislikeCard(req, res) {
   )
     .then((card) => {
       if (!card) {
-        res.status(NOT_FOUND).send({ message: 'Card not found' });
+        res.status(404).send({ message: 'Card not found' });
       } else {
         res.status(200).send(card);
       }
     })
     .catch((err) => {
-      handleErrors(res, err);
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'неправильный запрос' });
+      } else {
+        res.status(500).send({ message: 'Ошибка сервера' });
+      }
     });
 }
 
@@ -75,15 +86,18 @@ async function deleteCard(req, res) {
     const userId = req.user._id;
     const card = await Card.findById(cardId);
     if (!card) {
-      return res.status(NOT_FOUND).send({ message: 'Карточки не существует' });
+      return res.status(404).send({ message: 'Карточки не существует' });
     }
     if (card.owner.toString() !== userId) {
-      return res.status(FORBIDDEN).send({ message: 'Вам нельзя удалить эту карточку' });
+      return res.status(403).send({ message: 'Вам нельзя удалить эту карточку' });
     }
-    await Card.deleteOne(card);
-    return res.status(200).send({ data: card });
-  } catch (error) {
-    return res.status(DEFAULT).send({ message: 'Ошибка сервера' });
+    const deletedCard = await Card.deleteOne(card);
+    if (!deletedCard) {
+      return res.status(404).send({ message: 'Карточки не существует' });
+    }
+    return res.status(200).send({ data: deletedCard });
+  } catch (err) {
+    return res.status(500).send({ message: 'Ошибка сервера' });
   }
 }
 
