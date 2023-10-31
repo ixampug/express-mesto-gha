@@ -62,10 +62,18 @@ const createUser = (req, res) => {
         delete userResponse.password;
         res.status(201).send(userResponse);
       })
-      .catch((err) => {
-        if (err.name === 'ValidationError') {
-          res.status(400).send({ message: 'Ошибка валидации' });
-        } else if (err.code === 11000) {
+      .catch((error) => {
+        if (error.name === 'ValidationError') {
+          let message = 'Ошибка валидации: ';
+          if (error.errors) {
+            Object.keys(error.errors).forEach((errorField) => {
+              message += `${error.errors[errorField].message}; `;
+            });
+          } else {
+            message += 'Произошла ошибка валидации данных';
+          }
+          res.status(400).send({ message });
+        } else if (error.code === 11000) {
           res.status(409).send({ message: 'такой email уже используется' });
         } else {
           res.status(500).send({ message: 'Ошибка сервера' });
