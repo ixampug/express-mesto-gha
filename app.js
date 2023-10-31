@@ -12,7 +12,6 @@ const cardRouter = require('./routes/cards');
 const { login, createUser } = require('./controllers/users');
 // const handleErrors = require('./middlewares/handleErrors');
 const { REGEX } = require('./utils/constants');
-// const ErrorAPI = require('./errors/errors');
 
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useNewUrlParser: true,

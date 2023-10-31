@@ -1,37 +1,51 @@
-const {
-  BAD_REQUEST, NOT_FOUND, DEFAULT, ALREADY_EXIST, FORBIDDEN, UNAUTHORIZED,
-} = require('../utils/constants');
-
-class ErrorAPI extends Error {
-  constructor(status, message) {
-    super();
-    this.status = status;
-    this.message = message;
-  }
-
-  static badRequest(msg) {
-    return new ErrorAPI(BAD_REQUEST, msg);
-  }
-
-  static notFound(msg) {
-    return new ErrorAPI(NOT_FOUND, msg);
-  }
-
-  static default(msg) {
-    return new ErrorAPI(DEFAULT, msg);
-  }
-
-  static alreadyExist(msg) {
-    return new ErrorAPI(ALREADY_EXIST, msg);
-  }
-
-  static forbidden(msg) {
-    return new ErrorAPI(FORBIDDEN, msg);
-  }
-
-  static unauthorized(msg) {
-    return new ErrorAPI(UNAUTHORIZED, msg);
+/* eslint-disable max-classes-per-file */
+class BadRequestError extends Error {
+  constructor(message) {
+    super(message);
+    this.statusCode = 400;
   }
 }
 
-module.exports = ErrorAPI;
+class NotFoundError extends Error {
+  constructor(message) {
+    super(message);
+    this.statusCode = 404;
+  }
+}
+
+class DefaultError extends Error {
+  constructor(message) {
+    super(message);
+    this.statusCode = 500;
+  }
+}
+
+class AlreadyExistError extends Error {
+  constructor(message) {
+    super(message);
+    this.statusCode = 409;
+  }
+}
+
+class ForbiddenError extends Error {
+  constructor(message) {
+    super(message);
+    this.statusCode = 403;
+  }
+}
+
+class UnauthorizedError extends Error {
+  constructor(message) {
+    super(message);
+    this.statusCode = 401;
+  }
+}
+
+module.exports = {
+  BadRequestError,
+  NotFoundError,
+  DefaultError,
+  AlreadyExistError,
+  ForbiddenError,
+  UnauthorizedError,
+};

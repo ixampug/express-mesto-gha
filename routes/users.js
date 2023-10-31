@@ -3,6 +3,8 @@ const { celebrate, Joi } = require('celebrate');
 const userController = require('../controllers/users');
 
 const urlRegex = /^https?:\/\/(www\.)?[\w\-._~:/?#[\]@!$&'()*+,;=]+#?$/;
+// GET /users/me - возвращает информацию о текущем пользователе
+router.get('/me', userController.getCurrentUser);
 
 router.get('/:userId', celebrate({
   params: Joi.object().keys({
@@ -27,6 +29,4 @@ router.patch('/me/avatar', celebrate({
   }),
 }), userController.updateAvatar);
 
-// GET /users/me - возвращает информацию о текущем пользователе
-router.get('/me', userController.getCurrentUser);
 module.exports = router;
