@@ -12,6 +12,7 @@ const cardRouter = require('./routes/cards');
 const { login, createUser } = require('./controllers/users');
 const handleErrors = require('./middlewares/handleErrors');
 const { REGEX } = require('./utils/constants');
+const { NotFoundError } = require('./errors/errors');
 
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useNewUrlParser: true,
@@ -51,14 +52,12 @@ app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
 app.use('*', (req, res, next) => {
-  const error = new Error('Страница не существует');
-  error.status = 404;
-  next(error);
+  next(new NotFoundError('not found'));
 });
 
-app.use(handleErrors);
-
 app.use(errors());
+
+app.use(handleErrors);
 
 app.listen(port, () => {
   // eslint-disable-next-line no-console
