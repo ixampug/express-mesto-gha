@@ -1,15 +1,8 @@
-const ErrorAPI = require('../errors/errors');
-
-const handleErrors = (err, req, res) => {
-  if (err instanceof ErrorAPI) {
-    res.status(err.status);
-    res.set('Content-Type', 'application/json');
-    res.send({ message: err.message });
-  } else {
-    res.status(ErrorAPI.default);
-    res.set('Content-Type', 'application/json');
-    res.send({ message: 'Ошибка сервера' });
-  }
+const handleErrors = (err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = statusCode === 500 ? 'ошибка сервера' : err.message;
+  res.status(statusCode).send({ message });
+  next();
 };
 
 module.exports = handleErrors;

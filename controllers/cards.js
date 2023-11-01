@@ -77,24 +77,24 @@ function dislikeCard(req, res, next) {
     });
 }
 
-async function deleteCard(req, res, next) {
+async function deleteCard(req, res) {
   try {
     const { cardId } = req.params;
     const userId = req.user._id;
     const card = await Card.findById(cardId);
     if (!card) {
-      next(new NotFoundError('Карточки не существует'));
+      throw new NotFoundError('Карточки не существует');
     }
     if (card.owner.toString() !== userId) {
-      next(new ForbiddenError('Вам нельзя удалить эту карточку'));
+      throw new ForbiddenError('Вам нельзя удалить эту карточку');
     }
     const deletedCard = await Card.deleteOne(card);
     if (!deletedCard) {
-      next(new NotFoundError('Карточки не существует'));
+      throw new NotFoundError('Карточки не существует');
     }
     res.status(200).send({ data: deletedCard });
   } catch (err) {
-    next(new DefaultError('Ошибка сервера'));
+    throw new DefaultError('Ошибка сервера');
   }
 }
 
