@@ -77,7 +77,7 @@ function dislikeCard(req, res, next) {
     });
 }
 
-async function deleteCard(req, res) {
+async function deleteCard(req, res, next) {
   try {
     const { cardId } = req.params;
     const userId = req.user._id;
@@ -94,7 +94,7 @@ async function deleteCard(req, res) {
     }
     res.status(200).send({ data: deletedCard });
   } catch (err) {
-    throw new DefaultError('Ошибка сервера');
+    next(err);
   }
 }
 
