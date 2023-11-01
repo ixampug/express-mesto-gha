@@ -52,7 +52,7 @@ app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
 app.use('*', (req, res, next) => {
-  next(new NotFoundError('not found'));
+  next(new NotFoundError('страница не существует'));
 });
 
 app.use(errors());
